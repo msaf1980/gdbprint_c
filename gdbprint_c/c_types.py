@@ -2,6 +2,7 @@ import gdb
 from gdbprint.gdbutils import *
 from gdbprint.gdbprinters import *
 from gdbprint.utils import *
+from gdbprint.define import longx
 
 def dereference(value):
     if value is None or value.address == 0:
@@ -39,7 +40,7 @@ class LinkedListPrinter(DebugPrinter):
         #print (self.head_addr)
         if self.node.type.code == gdb.TYPE_CODE_PTR:
             #address = self.node.dereference().address
-            address = long(self.node)
+            address = longx(self.node)
         else:
             address = self.node.address
         #print(str(self.node))
@@ -58,7 +59,7 @@ class LinkedListPrinter(DebugPrinter):
         return (pos, val)
         
     def get_pos(self):
-	return self.pos
+        return self.pos
 
 misctypes_printers = [
     LinkedListPrinter , 

@@ -49,28 +49,36 @@ class RunClean(clean):
     def run(self):
         from subprocess import Popen, PIPE, call
         from os import getcwd, chdir, path
+        from os import remove
+        import glob
         import shutil
         c = clean(self.distribution)
         c.all = True
         c.finalize_options()
         c.run()
         cdir = path.dirname(path.realpath(__file__))
+        for f in glob.glob(path.join(cdir, pname, "*.pyc")):
+            remove(f)
+        shutil.rmtree(path.join(cdir, 'build'), ignore_errors=True)
         shutil.rmtree(path.join(cdir, 'dist'), ignore_errors=True)
-        shutil.rmtree(path.join(cdir, 'gdbprint_c.egg-info'), ignore_errors=True)
+        shutil.rmtree(path.join(cdir, pname + '.egg-info'), ignore_errors=True)
+        shutil.rmtree(path.join(cdir, pname, '__pycache__'), ignore_errors=True)
         cwd = path.join(cdir, 'tests')
         chdir(cwd)
         call([ 'make', 'clean' ])
 
 if __name__ == '__main__':
 
-    setup(name='gdbprint_c',
-        version='0.1.0',
+    pname = 'gdbprint_c'
+
+    setup(name=pname,
+        version='0.1.1',
         description='GDB C data structuras printers for gdbprint',
         url='http://github.com/msaf1980/gdbprint_c',
         author='Michail Safronov',
         author_email='msaf1980@gmail.com',
         license='MIT',
-        packages=['gdbprint_c'],
+        packages=[pname],
         install_requires=['gdbprint'],
         zip_safe=True,
         cmdclass={
