@@ -74,7 +74,10 @@ class RunTests(Command):
             with open(test + '.reject', 'w') as f: f.write(o)
             with open(test + '.out', 'r') as f: i = f.read()
 
-            if o != i:
+            if o == i:
+                failed = False
+            else:
+                failed = True
                 if self.xml_output:
                     xmlfile.write('<failure message="test failure">\n')
                     diff_p = Popen(['diff', '-u', test + '.out', test + '.reject' ], cwd=cwd, stdout=PIPE, universal_newlines=True)
@@ -93,7 +96,7 @@ class RunTests(Command):
             xmlfile.write('</testsuite>\n')
             xmlfile.close()
 
-        if o != i:
+        if failed:
             raise TestError("test failed!")
 
 class RunClean(clean):
