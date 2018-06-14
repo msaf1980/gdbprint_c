@@ -1,23 +1,43 @@
 import sys
+import os
+import time
 from distutils.cmd import Command
 from setuptools import setup
 from distutils.command.clean import clean
+from distutils.errors import *
+
+class TestError(DistutilsError):
+    pass
 
 class RunTests(Command):
-    user_options=[]
-    def initialize_options(self): pass
+    user_options = [
+        ('xml-output=', None,
+         "file for JUnit compatible XML output."),
+        ]
+    def initialize_options(self):
+        self.xml_output = None
+
     def finalize_options(self): pass
     def run(self):
+        tests = ['test_testout', 'test_testout_v2']
         from subprocess import Popen, PIPE, call
         from os import getcwd, execlp, chdir, path
         import re
         cdir = path.dirname(path.realpath(__file__))
+
+        if self.xml_output:
+            xmlfile = open(self.xml_output, "w")
+            xmlfile.write('<?xml version="1.0" encoding="utf-8"?>\n<testsuite tests="%d">\n' % len(tests))
+
         cwd = path.join(cdir, 'tests')
         chdir(cwd)
-        if call(["make"]):
+        if os.system("make > /dev/null 2>&1"):
             raise Exception("make failed")
-        for test in ['test_testout', 'test_testout_v2']:
-            sys.stdout.write(test + "\n")
+        for test in tests:
+            if self.xml_output:
+                xmlfile.write('<testcase classname="gdbtest" name="%s"' % test)
+            else:
+                sys.stdout.write(test)
             sys.stdout.flush()
             test = path.join(cwd, test)
             fg = open(test+'.gdb', 'r')
@@ -31,6 +51,7 @@ class RunTests(Command):
             fg.close()
             fi.close()
             fo.close()
+            start = time.time()
             p=Popen(['gdb', '-batch', '-n', '-x', test + '.in'], cwd=cwd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
             (o,e)=p.communicate()
             err = re.sub(r'warning: .*\n', '', e)
@@ -45,9 +66,35 @@ class RunTests(Command):
             o = re.sub(r'0x[0-9a-f]*[1-9a-f]+[0-9a-f]*', '0xHEX', o)
             #o = re.sub(r'(=.*) 0x[0-9a-f]+', r'\1 0xXXXXX', o)
             o = re.sub(cdir, '', o)
+            timediff = time.time() - start
+            if self.xml_output:
+                xmlfile.write(' time="%f">\n' % timediff)
+            else:
+                sys.stdout.write(' in %f s\n' % timediff)
             with open(test + '.reject', 'w') as f: f.write(o)
-            call([ 'diff', '-u', test + '.out', test + '.reject' ])
+            with open(test + '.out', 'r') as f: i = f.read()
 
+            if o != i:
+                if self.xml_output:
+                    xmlfile.write('<failure message="test failure">\n')
+                    diff_p = Popen(['diff', '-u', test + '.out', test + '.reject' ], cwd=cwd, stdout=PIPE, universal_newlines=True)
+                    (diff_o, diff_e) = diff_p.communicate()
+                    xmlfile.write(diff_o)
+                else:
+                    call([ 'diff', '-u', test + '.out', test + '.reject' ])
+
+                if self.xml_output:
+                    xmlfile.write('</failure>\n')
+
+            if self.xml_output:
+                xmlfile.write('</testcase>\n')
+
+        if self.xml_output:
+            xmlfile.write('</testsuite>\n')
+            xmlfile.close()
+
+        if o != i:
+            raise TestError("test failed!")
 
 class RunClean(clean):
     def run(self):
