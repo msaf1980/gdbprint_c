@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import re
 from distutils.cmd import Command
 from setuptools import setup
 from distutils.command.clean import clean
@@ -121,12 +122,26 @@ class RunClean(clean):
         chdir(cwd)
         call([ 'make', 'clean' ])
 
+
+def pkg_version(name):
+    with open('%s/__init__.py' % name, 'r') as f:
+        for line in f:
+            m = re.match(r'^version * = *\"(.*)\"', line)
+            if not m is None:
+                v = m.group(1)
+                m = re.match(r'^\"?([0-9]+)\.([0-9]+)\.([0-9]+)\"?$', v)
+                if m is None:
+                    raise ValueError("incorrect version: %s" % v)
+                return "%d.%d.%d" % (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        raise ValueError("version not found")
+
+
 if __name__ == '__main__':
 
     pname = 'gdbprint_c'
 
     setup(name=pname,
-        version='0.1.1',
+        version=pkg_version(pname),
         description='GDB C data structuras printers for gdbprint',
         url='http://github.com/msaf1980/gdbprint_c',
         author='Michail Safronov',
