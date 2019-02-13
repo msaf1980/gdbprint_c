@@ -45,6 +45,14 @@ Breakpoint 1, main at test.c:76
         "next" = <0x0>,
     } },
 } }
+(gdb) p_v tNode_head <list> [1 -->next].((*next))
+"tNode_head" = { ptr = {
+    [1] = { ptr = {
+        "Name" = { [0:29] = "2" + \0 },
+        "Addr" = { [0:49] = "" + \0 },
+        "next" = <0x0>,
+    } },
+} }
 (gdb) p_v msghead.tqh_first <list> [ --> next.tqe_next ] .((!next))
 "msghead" = { ptr = {
     "tqh_first" = { ptr = {

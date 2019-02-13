@@ -45,6 +45,14 @@ Breakpoint 1, main at test.c:76
         "next" = (struct tNode *) <0x0>,
     } },
 } }
+(gdb) p_v tNode_head <list> [1 -->next].((*next))
+"tNode_head" = (tNode *) <0xHEX> { ptr =  {
+    [1] = (struct tNode *) <0xHEX> { ptr =  {
+        "Name" = (char [30]) <0xHEX> { str_len:1 [0:29] = "2" + \0 },
+        "Addr" = (char [50]) <0xHEX> { str_len:0 [0:49] = "" + \0 },
+        "next" = (struct tNode *) <0x0>,
+    } },
+} }
 (gdb) p_v msghead.tqh_first <list> [ --> next.tqe_next ] .((!next))
 "msghead" = (msg_head *) <0xHEX> { ptr =  {
     "tqh_first" = (struct msg *) <0xHEX> { ptr =  {
